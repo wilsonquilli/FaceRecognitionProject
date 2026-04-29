@@ -11,6 +11,8 @@ myList = os.listdir(path)
 print(myList)
 for cls in myList:
     curImg = cv2.imread(f'{path}/{cls}')
+    if curImg is None:
+        continue
     images.append(curImg)
     classNames.append(os.path.splitext(cls)[0])
 print(classNames)
@@ -19,12 +21,14 @@ def findEncodings(images):
     encodeList = []
     for img in images:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        encode = face_recognition.face_encodings(img)[0]
-        encodeList.append(encode)
+        encodings = face_recognition.face_encodings(img)
+        if not encodings:
+            continue
+        encodeList.append(encodings[0])
     return encodeList
 
 def markAttendance(name):
-    with open('Attendance.csv', 'r+') as f:
+    with open('venv/Attendance.csv', 'r+') as f:
         myDataList = f.readlines()
         nameList = []
         for line in myDataList:
@@ -41,9 +45,13 @@ encodeListKnown = findEncodings(images)
 print("Encoding Complete!")
 
 cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    raise RuntimeError("Could not access the webcam. Allow camera access for your terminal or Python app in macOS settings.")
 
 while True:
     success, img = cap.read()
+    if not success:
+        break
     imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
